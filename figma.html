@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multi Frame Dashboard Guru</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
+
+  :root {
+    --color-bg: #ffffff;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-yellow: #facc15;
+    --color-yellow-dark: #d4af37;
+    --color-card-bg: #fefce8;
+    --border-radius: 0.75rem; /* 12px */
+    --shadow-light: rgba(0, 0, 0, 0.05);
+    --max-container-width: 1200px;
+    --spacing: 1.5rem;
+    --transition-duration: 0.3s;
+    --font-family: 'Poppins', sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    padding: 1.25rem 3rem 1.5rem 3rem;
+    box-shadow: 0 2px 8px var(--shadow-light);
+    z-index: 1000;
+  }
+  header h1 {
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: var(--color-text-primary);
+    margin: 0;
+    user-select: none;
+  }
+  main.container {
+    flex-grow: 1;
+    max-width: var(--max-container-width);
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem 1.5rem; /* bottom space for nav */
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* Content frames - only one visible */
+  section.frame {
+    display: none;
+  }
+  section.frame.active {
+    display: block;
+  }
+
+  /* Metrics Grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background-color: var(--color-card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px var(--shadow-light);
+    padding: 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .card h3 {
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-primary);
+  }
+  .card p.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-yellow);
+    user-select: text;
+    margin: 0;
+  }
+
+  /* Action Buttons */
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .btn {
+    background-color: var(--color-yellow);
+    color: var(--color-text-primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1.5rem;
+    flex: 1 1 160px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(250,204,21,0.6);
+    transition: background-color var(--transition-duration);
+    user-select: none;
+    text-align: center;
+  }
+  .btn:hover,
+  .btn:focus-visible {
+    background-color: var(--color-yellow-dark);
+    outline: none;
+  }
+
+  /* Tugas Aktif Section */
+  .tasks {
+    background-color: var(--color-card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px var(--shadow-light);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .tasks h2 {
+    margin: 0 0 1.25rem 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+  }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+  }
+  .task-check {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    stroke: var(--color-yellow);
+    stroke-width: 3;
+    fill: none;
+  }
+  .task-desc {
+    user-select: text;
+    line-height: 1.3;
+  }
+
+  /* Navigation */
+  nav.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--color-yellow);
+    box-shadow: 0 -3px 12px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.75rem 0;
+    font-family: var(--font-family);
+    user-select: none;
+    z-index: 1000;
+  }
+  nav.bottom-nav button.nav-item {
+    background: none;
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    transition: color var(--transition-duration);
+  }
+  nav.bottom-nav button.nav-item[aria-current="page"],
+  nav.bottom-nav button.nav-item:hover,
+  nav.bottom-nav button.nav-item:focus-visible {
+    color: var(--color-yellow-dark);
+    outline: none;
+  }
+  nav.bottom-nav button.nav-item svg {
+    stroke: var(--color-text-primary);
+    width: 22px;
+    height: 22px;
+    stroke-width: 2.5;
+    fill: none;
+    transition: stroke var(--transition-duration);
+  }
+  nav.bottom-nav button.nav-item[aria-current="page"] svg,
+  nav.bottom-nav button.nav-item:hover svg,
+  nav.bottom-nav button.nav-item:focus-visible svg {
+    stroke: var(--color-yellow-dark);
+  }
+
+  /* Additional Screen Specific Styles */
+  /* Materi List */
+  .materi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .materi-item {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow-light);
+    cursor: pointer;
+    transition: background-color var(--transition-duration);
+  }
+  .materi-item:hover {
+    background-color: #fff7c0;
+  }
+  .materi-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0 0 0.3rem 0;
+  }
+  .materi-date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  /* Quiz Creation */
+  form.quiz-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 600px;
+  }
+  form.quiz-form label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+  }
+  form.quiz-form input,
+  form.quiz-form select,
+  form.quiz-form textarea {
+    padding: 0.6rem 0.8rem;
+    font-size: 1rem;
+    border: 1.5px solid var(--color-text-secondary);
+    border-radius: var(--border-radius);
+    transition: border-color var(--transition-duration);
+    font-family: var(--font-family);
+  }
+  form.quiz-form input:focus,
+  form.quiz-form select:focus,
+  form.quiz-form textarea:focus {
+    border-color: var(--color-yellow);
+    outline: none;
+  }
+  form.quiz-form button.submit-btn {
+    background-color: var(--color-yellow);
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    box-shadow: 0 3px 12px rgba(250,204,21,0.6);
+    transition: background-color 0.3s ease;
+  }
+  form.quiz-form button.submit-btn:hover,
+  form.quiz-form button.submit-btn:focus-visible {
+    background-color: var(--color-yellow-dark);
+    outline: none;
+  }
+  form.quiz-form textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  /* Results Table */
+  table.results-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.results-table thead {
+    background-color: var(--color-card-bg);
+    font-weight: 600;
+  }
+  table.results-table th,
+  table.results-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1.5px solid var(--color-card-bg);
+  }
+  table.results-table tbody tr:hover {
+    background: #fff7c0;
+  }
+
+  /* Settings */
+  .settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 600px;
+  }
+  .settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 3px 10px var(--shadow-light);
+  }
+  .settings-item label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+  }
+  .settings-item input[type="checkbox"] {
+    scale: 1.3;
+    cursor: pointer;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    header h1 {
+      font-size: 1.85rem;
+      padding: 0 1rem;
+    }
+    .card p.metric-value {
+      font-size: 2rem;
+    }
+    .actions {
+      gap: 0.75rem;
+      flex-direction: column;
+    }
+    .btn {
+      flex: 1 1 100%;
+      font-size: 1rem;
+      padding: 0.65rem 1rem;
+    }
+    .metrics-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <header role="banner" aria-label="Header Dashboard Guru">
+    <h1>Selamat datang, nci Virgin 👋</h1>
+  </header>
+
+  <main class="container" role="main" aria-live="polite">
+    <!-- Frame 1: Dashboard Guru -->
+    <section id="frame-dashboard" class="frame active" aria-label="Dashboard Guru">
+      <section class="metrics-grid" aria-label="Grid metrik">
+        <article class="card" role="region" aria-labelledby="label-siswa-aktif" tabindex="0">
+          <h3 id="label-siswa-aktif">Jumlah siswa aktif</h3>
+          <p class="metric-value">32</p>
+        </article>
+        <article class="card" role="region" aria-labelledby="label-materi-input" tabindex="0">
+          <h3 id="label-materi-input">Jumlah materi yang sudah diinput</h3>
+          <p class="metric-value">11</p>
+        </article>
+        <article class="card" role="region" aria-labelledby="label-quiz-berjalan" tabindex="0">
+          <h3 id="label-quiz-berjalan">Quiz yang sedang berjalan</h3>
+          <p class="metric-value">2</p>
+        </article>
+        <article class="card" role="region" aria-labelledby="label-siswa-selesai-quiz" tabindex="0">
+          <h3 id="label-siswa-selesai-quiz">Jumlah siswa yang menyelesaikan quiz</h3>
+          <p class="metric-value">25</p>
+        </article>
+      </section>
+
+      <section class="actions" aria-label="Aksi utama">
+        <button class="btn" type="button" onclick="alert('Buat Materi clicked')">Buat Materi</button>
+        <button class="btn" type="button" onclick="alert('Buat Quiz clicked')">Buat Quiz</button>
+        <button class="btn" type="button" onclick="alert('Lihat Hasil Quiz clicked')">Lihat Hasil Quiz</button>
+        <button class="btn" type="button" onclick="alert('Lihat Semua Materi clicked')">Lihat Semua Materi</button>
+        <button class="btn" type="button" onclick="alert('Kelola Siswa clicked')">Kelola Siswa</button>
+      </section>
+
+      <section class="tasks" aria-label="Tugas aktif">
+        <h2>Tugas Aktif</h2>
+        <div class="task-item" tabindex="0">
+          <svg class="task-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <p class="task-desc">Quiz Bahasa Indonesia (Kelas 4) — 3 siswa belum mengerjakan.</p>
+        </div>
+        <div class="task-item" tabindex="0" style="margin-top: 0.4rem;">
+          <p class="task-desc">Materi Bahasa Indonesia — Dipublikasikan kemarin.</p>
+        </div>
+      </section>
+    </section>
+
+    <!-- Frame 2: Materi List -->
+    <section id="frame-materi" class="frame" aria-label="Daftar Materi">
+      <h2>Daftar Materi</h2>
+      <div class="materi-list" role="list">
+        <article class="materi-item" role="listitem" tabindex="0">
+          <h3 class="materi-title">Bahasa Indonesia - Pengenalan Cerita</h3>
+          <p class="materi-date">Dipublikasikan 5 hari lalu</p>
+        </article>
+        <article class="materi-item" role="listitem" tabindex="0">
+          <h3 class="materi-title">Matematika - Operasi Penjumlahan</h3>
+          <p class="materi-date">Dipublikasikan 3 hari lalu</p>
+        </article>
+        <article class="materi-item" role="listitem" tabindex="0">
+          <h3 class="materi-title">IPA - Sistem Pencernaan</h3>
+          <p class="materi-date">Dipublikasikan seminggu lalu</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Frame 3: Buat Quiz -->
+    <section id="frame-quiz" class="frame" aria-label="Form Buat Quiz">
+      <h2>Buat Quiz Baru</h2>
+      <form class="quiz-form" aria-describedby="quiz-desc">
+        <p id="quiz-desc" style="color: var(--color-text-secondary); margin-top: 0; margin-bottom: 1rem;">
+          Isi detail quiz Anda di bawah ini.
+        </p>
+        <label for="quiz-title">Judul Quiz</label>
+        <input id="quiz-title" name="quiz-title" type="text" placeholder="Masukkan judul quiz" required />
+        <label for="quiz-class">Kelas</label>
+        <select id="quiz-class" name="quiz-class" required>
+          <option value="" disabled selected>Pilih kelas</option>
+          <option value="1">Kelas 1</option>
+          <option value="2">Kelas 2</option>
+          <option value="3">Kelas 3</option>
+          <option value="4">Kelas 4</option>
+          <option value="5">Kelas 5</option>
+          <option value="6">Kelas 6</option>
+        </select>
+        <label for="quiz-description">Deskripsi Quiz</label>
+        <textarea id="quiz-description" name="quiz-description" placeholder="Tulis deskripsi singkat" required></textarea>
+        <button class="submit-btn btn" type="submit">Simpan Quiz</button>
+      </form>
+    </section>
+
+    <!-- Frame 4: Hasil Quiz -->
+    <section id="frame-hasil" class="frame" aria-label="Hasil Quiz">
+      <h2>Hasil Quiz</h2>
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Nama Siswa</th>
+            <th>Quiz</th>
+            <th>Nilai</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tabindex="0">
+            <td>Ahmad</td>
+            <td>Quiz Bahasa Indonesia</td>
+            <td>85</td>
+            <td>Selesai</td>
+          </tr>
+          <tr tabindex="0">
+            <td>Nurul</td>
+            <td>Quiz Matematika</td>
+            <td>90</td>
+            <td>Selesai</td>
+          </tr>
+          <tr tabindex="0">
+            <td>Rina</td>
+            <td>Quiz IPA</td>
+            <td>78</td>
+            <td>Selesai</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Frame 5: Pengaturan -->
+    <section id="frame-pengaturan" class="frame" aria-label="Pengaturan">
+      <h2>Pengaturan</h2>
+      <form class="settings-list" aria-label="Opsi pengaturan">
+        <div class="settings-item">
+          <label for="notif-toggle">Aktifkan Notifikasi</label>
+          <input type="checkbox" id="notif-toggle" name="notif-toggle" checked />
+        </div>
+        <div class="settings-item">
+          <label for="dark-mode-toggle">Mode Gelap</label>
+          <input type="checkbox" id="dark-mode-toggle" name="dark-mode-toggle" />
+        </div>
+        <div class="settings-item">
+          <label for="auto-update">Perbarui Otomatis</label>
+          <input type="checkbox" id="auto-update" name="auto-update" checked />
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Navigasi utama">
+    <button class="nav-item" aria-current="page" type="button" aria-label="Beranda" data-frame="frame-dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z"/>
+      </svg>
+      Beranda
+    </button>
+    <button class="nav-item" type="button" aria-label="Materi" data-frame="frame-materi">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 3h-8a2 2 0 0 0-2 2v5h12V5a2 2 0 0 0-2-2z"/>
+      </svg>
+      Materi
+    </button>
+    <button class="nav-item" type="button" aria-label="Quiz" data-frame="frame-quiz">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4l3 3"/>
+      </svg>
+      Quiz
+    </button>
+    <button class="nav-item" type="button" aria-label="Hasil" data-frame="frame-hasil">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 17v-6a2 2 0 0 1 4 0v6"/>
+        <rect x="2" y="19" width="20" height="3" rx="1.5"/>
+      </svg>
+      Hasil
+    </button>
+    <button class="nav-item" type="button" aria-label="Pengaturan" data-frame="frame-pengaturan">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Pengaturan
+    </button>
+  </nav>
+
+<script>
+  const navButtons = document.querySelectorAll('nav.bottom-nav button.nav-item');
+  const frames = document.querySelectorAll('section.frame');
+
+  function activateFrame(id) {
+    frames.forEach(f => {
+      if (f.id === id) {
+        f.classList.add('active');
+      } else {
+        f.classList.remove('active');
+      }
+    });
+    navButtons.forEach(btn => {
+      if(btn.dataset.frame === id) {
+        btn.setAttribute('aria-current', 'page');
+      } else {
+        btn.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activateFrame(btn.dataset.frame);
+    });
+    btn.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === " ") {
+        e.preventDefault();
+        activateFrame(btn.dataset.frame);
+      }
+    });
+  });
+
+  // Initialize first frame
+  activateFrame('frame-dashboard');
+</script>
+</body>
+</html>
+
